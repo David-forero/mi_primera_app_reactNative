@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -11,15 +11,32 @@ import {
 } from "react-native";
 import Cita from "./components/Cita";
 import Formulario from "./components/Formulario";
+import asyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const [mostrar, setMostrar] = useState(false);
   const [citas, setCitas] = useState([]);
 
+  useEffect(() => {
+    const obtenerCitas = async () =>{
+      try {
+        const citasStorage = await asyncStorage.getItem('citas');
+        if (citasStorage) {
+          setCitas(JSON.parse(citasStorage))
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    obtenerCitas()
+  }, [])
+
   const eliminarPaciente = (id) => {
-    setCitas((citasActuales) => {
-      return citasActuales.filter((cita) => cita.id !== id);
-    });
+
+    const citasFiltradas  = citas.filter(cita => cita.id !== id);
+    setCitas(citasFiltradas)
+    guardarCitas(JSON.stringify(citasFiltradas))
   };
 
   const mostrarFormularioFn = () => {
@@ -28,6 +45,14 @@ export default function App() {
 
   const cerrarTeclado = () =>{
     Keyboard.dismiss();
+  }
+
+  const guardarCitas = async (citas) =>{
+    try {
+      await asyncStorage.setItem('citas', citas);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -48,6 +73,7 @@ export default function App() {
               citas={citas}
               setCitas={setCitas}
               setMostrar={setMostrar}
+              guardarCitas={guardarCitas}
             />
           ) : (
             <>
